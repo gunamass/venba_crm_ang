@@ -13,7 +13,7 @@ export class AllApiService {
 
   }
 
-  baseMail = "https://nodemailsender-eta.vercel.app"
+  baseMail = "https://nodemail/"
 
   sendMailToClient(payload: any): Observable<any> {
     return this.http.post(`${this.baseMail}/sendMailToClient`, payload);

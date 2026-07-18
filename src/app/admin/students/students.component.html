@@ -1,0 +1,676 @@
+<div class="container-fluid py-4 col-12">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="fw-bold mb-1">Student Management</h4>
+      <p class="text-muted mb-0">Manage student records and track their progress</p>
+    </div>
+    <button *ngIf="auth.isAdmin()" class="btn k-btn" (click)="openDialog('new')">
+      <i class="fas fa-plus me-2"></i> Add Student
+    </button>
+  </div>
+
+  <div *ngIf="auth.isAdmin()" class="row g-3 d-flex align-items-stretch mb-4">
+
+    <!-- Stats Row -->
+    <!-- Total Students -->
+    <div class="col-sm-6 col-md">
+      <div class="card shadow-sm border-0 p-3 h-100  ">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="text-muted mb-0">Total Students</h6>
+          <i class="fas fa-users text-secondary"></i>
+        </div>
+        <h3 class="mt-2 fw-bold mt-4">{{totalStudents}}</h3>
+        <span class="text-muted small k-fs-s">Enrolled students</span>
+      </div>
+    </div>
+
+    <!-- Active Students -->
+    <div class="col-sm-6 col-md">
+      <div class="card shadow-sm border-0 p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="text-muted mb-0">Active Students</h6>
+          <i class="fas fa-eye text-secondary"></i>
+        </div>
+        <h3 class="mt-2 fw-bold mt-4">{{activeStudents?.length||0}}</h3>
+        <span class="text-muted small k-fs-s">Currently studying
+
+        </span>
+
+      </div>
+    </div>
+
+    <!-- Fees Collected -->
+    <div class="col-sm-6 col-md">
+      <div class="card shadow-sm border-0 p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="text-muted mb-0">Fees Collected</h6>
+          <i class="fas fa-award text-success"></i>
+        </div>
+        <h3 class="mt-4 fw-bold text-success">₹{{feeCollected}}</h3>
+        <span class="text-muted small k-fs-s">Total collected
+
+        </span>
+
+      </div>
+    </div>
+
+    <!-- Fees Due -->
+    <div class="col-sm-6 col-md">
+      <div class="card shadow-sm border-0 p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="text-muted mb-0">Fees Due</h6>
+          <i class="fas fa-clock "></i>
+        </div>
+        <h3 class="mt-4 fw-bold text-danger">₹{{outStandingFee}}</h3>
+        <span class="text-muted small k-fs-s">Outstanding amount
+
+        </span>
+
+      </div>
+    </div>
+
+    <!-- Avg Attendance-->
+    <div class="col-sm-6 col-md">
+      <div class="card shadow-sm border-0 p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="text-muted mb-0">Avg Attendance</h6>
+          <i class="fas fa-tasks text-secondary"></i>
+        </div>
+        <h3 class="mt-2 fw-bold mt-4">
+          0 %
+        </h3>
+        <span class="text-muted small k-fs-s">Class attendance</span>
+
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card p-3 mb-4 mt-3 shadow-sm">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <input type="text" class="form-control" placeholder="Search by name" [(ngModel)]="searchTerm"
+          (input)="applyFilters()">
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" [(ngModel)]="selectedCourse" (change)="courseFilters()">
+          <option value="">All Courses</option>
+          <option *ngFor="let c of courses" [value]="c">{{ c }}</option>
+          <option *ngIf="courses.length === 0" disabled>No courses available</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" [(ngModel)]="selectedStatus" (change)="statusFilters()">
+          <option value="">All Status</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+      <div class="col-md-2 text-end">
+        <button class="btn k-btn w-100" (click)="resetFilters()">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Students Table -->
+  <div class="card shadow-sm ">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 k-fs">
+        <caption class="caption-top my-1 mx-2">
+          <h6>Enrolled Students ({{totalStudents}})</h6>
+          <p>Manage student information and track progress
+          </p>
+
+        </caption>
+        <thead class="table-light">
+          <tr>
+            <th>Student</th>
+            <th> Course Details</th>
+            <th>Attendance</th>
+            <th> Fee Status</th>
+            <th>Progress</th>
+            <th>Status</th>
+            <th class="">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of studentsDataSource.data">
+            <td>
+              <div class="d-flex align-items-center">
+                <div style="width: 30px;height: 30px;"
+                  class="rounded-circle bg-secondary-subtle d-flex align-items-center justify-content-center me-2">
+                  {{s.fullName | uppercase |
+                  slice:0:1}}</div>
+                <div class="d-flex flex-column">
+                  <h6 class="fw-bold mb-0">{{ s.fullName }}</h6>
+                  <small class="text-muted">{{ s.studentID }}</small>
+                  <small class="text-muted">{{ s.email }}</small>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="d-flex flex-column">
+                <h6 class="fw-bold mb-0">{{ s.course || 0}}</h6>
+                <small class="text-muted">{{ (s.shift +' - '+ s.startTime+'-'+s.endTime) || 0}}</small>
+                <small class="text-muted">{{ (s.classStartDate |date:'dd MMM yy') + ' to ' + (s.classEndDate|date:'dd
+                  MMM yy') || 0}}</small>
+              </div>
+            </td>
+            <td>
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-success" role="progressbar"
+                  [style.width.%]="s.attendance?.length ? (((s.attendance.filter(isMatch).length) / s.attendance.length) * 100) : 0">
+                </div>
+              </div>
+              <small>{{
+                (s.attendance?.length ?
+                ((s.attendance.filter(isMatch).length) / s.attendance.length)
+                : 0)
+                | percent:'1.2-2'
+                }} </small>
+            </td>
+            <td [ngClass]="{'text-success': s.feeStatus === 'Paid', 'text-danger': s.feeStatus !== 'Paid'}">
+              <div class="d-flex flex-column">
+                <h6 class="fw-bold mb-0">{{ s?.balanceFee +'/'+ s?.totalFee || 0}}</h6>
+                <small class="text-muted">Due : {{ s?.dueDay.length || 0 }}</small>
+              </div>
+            </td>
+            <td>
+              <p>Projects:</p>
+              <p>Assignments:</p>
+            </td>
+            <td>
+              <span class="badge"
+                [ngClass]="{'bg-success': s.status === 'Active', 'bg-secondary': s.status === 'Inactive'}">
+                {{ s.status }}
+              </span>
+            </td>
+            @if(s.status == 'Active'){
+            <td class="text-end fs-6">
+
+              <i class="fas fa-eye me-2" (click)="openOverViewModal(s)"></i>
+              <i class="fas fa-envelope me-2" (click)="openMailModal(s.email)"></i>
+              <i class="fas fa-download me-2"></i>
+            </td>
+            }
+            @else {
+            <td>
+              <button class="btn k-btn" (click)="openDialog('enroll',s)"> Enroll</button>
+            </td>
+            }
+
+
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+
+
+<div class="modal fade show d-block" *ngIf="isStudentModalOpen" tabindex="-1" role="dialog">
+  <div class="modal-dialog cus-dig modal-dialog-centered modal-lg" style="width: 90%;" role="document">
+    <div class="modal-content k-fs k-lead-form">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title">Add New Student</h5>
+        <button type="button" class="btn-close" (click)="closeStudentModal()"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <form [formGroup]="studentForm">
+
+          <!-- Row 1 -->
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Full Name</label>
+              <input type="text" formControlName="fullName" class="form-control" placeholder="Enter full name" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Batch</label>
+              <input type="text" formControlName="batch" class="form-control text-uppercase"
+                placeholder="Enter batch" />
+            </div>
+          </div>
+
+          <!-- Row 2 -->
+          <div class="row g-3 mt-2">
+            <div class="col-md-6">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" formControlName="phoneNumber" maxlength="10" class="form-control"
+                placeholder="Enter phone" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" formControlName="email" class="form-control" placeholder="Enter email" />
+            </div>
+          </div>
+
+          <!-- Row 3 -->
+          <div class="row g-3 mt-2">
+            <div class="col-md-6">
+              <label class="form-label">Course</label>
+              <select class="form-select" formControlName="course">
+                <option value="" disabled selected>Select course</option>
+                <option *ngFor="let c of courses" [value]="c">{{ c }}</option>
+                <option *ngIf="courses.length === 0" disabled>No courses configured in Settings</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">No of class</label>
+              <input type="text" formControlName="classCount" class="form-control" placeholder="enter classes" />
+            </div>
+
+
+          </div>
+
+          <div class="row g-3 mt-2">
+            <div class="col-md-4">
+              <label class="form-label">Class Shift</label>
+              <select class="form-select" formControlName="shift">
+                <option value="Morning" [selected]="true">Morning</option>
+                <option value="Afternoon">Afternoon</option>
+                <option value="Evening">Evening</option>
+
+              </select>
+            </div>
+            <div class="col-md-8 d-flex justify-content-evenly">
+              <div class="col-md-5">
+                <label class="form-label">Start at</label>
+                <input type="time" formControlName="startTime" class="form-control" />
+              </div>
+              <div class="col-md-5">
+                <label class="form-label">End at</label>
+                <input type="time" formControlName="endTime" class="form-control" />
+              </div>
+            </div>
+          </div>
+          <div class="row g-3 mt-2">
+            <div class="col-md-6">
+              <label class="form-label">Class Start</label>
+              <input type="date" formControlName="classStartDate" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Class End</label>
+              <input type="date" formControlName="classEndDate" class="form-control" />
+            </div>
+          </div>
+
+          <div class="mt-4 p-3 border rounded" *ngIf="enrollmentKey">
+            <h6 class="fw-bold">Attendance</h6>
+
+            <div class="col-3 mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="attendanceCategory" id="weekend" value="weekend"
+                  [(ngModel)]="attendanceCategory" [ngModelOptions]="{standalone: true}" (input)="resetSelectedDays()">
+                <label class="form-check-label" for="weekend">Week-end</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="attendanceCategory" id="weekday" value="weekday"
+                  [(ngModel)]="attendanceCategory" [ngModelOptions]="{standalone: true}" (change)="resetSelectedDays()">
+                <label class="form-check-label" for="weekday">Week-Days</label>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">
+                Select Days
+                <span *ngIf="attendanceCategory == 'weekend'">(Sat/Sun only)</span>
+                <span *ngIf="attendanceCategory == 'weekday'">(Mon–Fri)</span>
+              </label>
+              <div class="d-flex flex-wrap">
+                <div class="form-check me-3" *ngFor="let day of availableDays">
+                  <input type="checkbox" class="form-check-input" [id]="day" [value]="day"
+                    (change)="toggleWeekday(day, $event)">
+                  <label class="form-check-label" [for]="day">{{ day }}</label>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn k-btn" (click)="onGenerateAttendance()">
+              Generate Attendance Dates
+            </button>
+
+            <div class="mt-3" *ngIf="attendanceDates.length > 0">
+              <h6 class="fw-bold">Generated Dates</h6>
+              <ul class="list-group">
+                <li class="list-group-item" *ngFor="let date of attendanceDates; index as i">
+                  {{ i+1 }}. {{ date.date | date : 'dd-MM-yyyy' }} ({{ date.day }})
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Fees Section -->
+          <div class="mt-4 p-3 border rounded" *ngIf="enrollmentKey">
+            <h6 class="fw-bold">Fees Details</h6>
+
+            <div class="row g-3 mt-2">
+              <div class="col-md-3">
+                <label class="form-label">Total Fee</label>
+                <input type="number" formControlName="totalFee" class="form-control" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Initial Amount</label>
+                <input type="number" formControlName="initialAmt" class="form-control" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Balance Fee</label>
+                <input type="number" formControlName="balanceFee" class="form-control" readonly />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">EMI Enabled</label>
+
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" [ngModelOptions]="{standalone: true}"
+                    [(ngModel)]="emiEnabled " (change)="logger()" role="switch" id="flexSwitchCheckDefault">
+                </div>
+              </div>
+            </div>
+
+            @if(emiEnabled){
+            <div class="row g-3 mt-2">
+              <div class="col-md-3">
+                <label class="form-label">Split Count</label>
+                <input type="number" formControlName="split" class="form-control" />
+              </div>
+              <!-- <div class="col-md-3">
+                <label class="form-label">Due Day</label>
+                <input type="number" formControlName="dueDay" class="form-control" />
+              </div> -->
+
+            </div>
+
+            <div class="col-md-3 d-flex align-items-center justify-content-center mt-3">
+              <button class="k-btn btn " (click)="updateDueDates()">Generate Emi</button>
+
+            </div>
+            }
+
+
+
+
+
+
+            <!-- Auto-generated Due Dates -->
+            <div class="mt-3" *ngIf="dueDates.length > 0">
+              <h6 class="fw-bold">Generated Due Dates</h6>
+              <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th>#</th>
+                    <th>Due Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let d of dueDates">
+                    <td>{{ d.dueNo }}</td>
+                    <td>{{ d.dueDate }}</td>
+                    <td>{{ d.dueAmt }}</td>
+                    <td>{{ d.status }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer" *ngIf="enrollmentKey">
+        <button type="button" class="btn k-btn text-white" (click)="enrollStudent()">Enroll Student</button>
+      </div>
+      <div class="modal-footer" *ngIf="!enrollmentKey">
+        <button type="button" class="btn k-btn text-white" (click)="AddNewStudent()">Add Student</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Dark overlay -->
+<div class="modal-backdrop fade show" *ngIf="isStudentModalOpen"></div>
+
+
+
+
+
+<!-- Modal -->
+<div class="modal fade" [class.show]="isStudenOverViewOpen" [style.display]="isStudenOverViewOpen ? 'block' : 'none'"
+  tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content rounded-3 shadow-lg">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title">{{ selectedStudentOverview?.fullName }} - {{ selectedStudentOverview ? 'Dashboard' :
+            '' }}</h5>
+          <small class="text-muted">Complete {{ selectedStudentOverview ? 'information and progress tracking' : ''
+            }}</small>
+        </div>
+        <button type="button" class="btn-close" (click)="closeOverViewModal()"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+
+        <!-- Material Tabs -->
+        <mat-tab-group>
+
+          <!-- Overview Tab -->
+          <mat-tab label="Overview">
+            <div class="row g-3 mt-3">
+              <!-- Left box -->
+              <div class="col-md-6">
+                <div class="border rounded p-3">
+                  <h6>Course Information</h6>
+                  <p><b>Course Name:</b> {{ selectedStudentOverview?.course }}</p>
+                  <p><b>Batch:</b> {{ selectedStudentOverview?.batch }} ({{ selectedStudentOverview?.shift }} - {{
+                    selectedStudentOverview?.startTime }} to {{ selectedStudentOverview?.endTime }})</p>
+                  <p><b>Start Date:</b> {{ selectedStudentOverview?.classStartDate |date:'dd MMM yy' }}</p>
+                  <p><b>End Date:</b> {{ selectedStudentOverview?.classEndDate |date:'dd MMM yy'}}</p>
+                  <p><b>Status:</b> {{ selectedStudentOverview?.status }}</p>
+                </div>
+              </div>
+
+              <!-- Right box -->
+              <div class="col-md-6">
+                <div class="border rounded p-3">
+                  <h6>Quick Stats</h6>
+
+                  <div class="mb-2">
+                    <small>Monthly Attendance</small>
+                    <div class="progress">
+                      <div class="progress-bar bg-purple" role="progressbar" style="width: 85%">85%</div>
+                    </div>
+                  </div>
+
+                  <div class="mb-2">
+                    <small>Fee Payment</small>
+                    <div class="progress">
+                      <div class="progress-bar bg-purple" role="progressbar" style="width: 60%">60%</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <small>Projects Completed</small>
+                    <div class="progress">
+                      <div class="progress-bar bg-purple" role="progressbar" style="width: 25%">1/4</div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </mat-tab>
+
+          <!-- Attendance Tab -->
+          <mat-tab label="Attendance">
+            <div class="mt-3">
+              <div class="table-responsive mt-3">
+                <table class="table table-bordered align-middle text-center">
+                  <thead class="table-light">
+                    <tr>
+                      <th>#</th>
+                      <th>Date</th>
+                      <th>Day</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let record of selectedStudentOverview?.attendance; let i = index">
+                      <td>{{ i + 1 }}</td>
+                      <td>{{ record.date |date:'dd MMM yy' }}</td>
+                      <td>{{ record.day }}</td>
+
+                      <!-- Dropdown -->
+                      <td>
+                        <select class="form-select form-select-sm" [(ngModel)]="record.attend"
+                          [disabled]="record.isLocked" name="attendance{{ i }}">
+                          <option value="none" disabled>Select</option>
+                          <option *ngFor="let opt of attendanceOptions" [value]="opt">
+                            {{ opt }}
+                          </option>
+                        </select>
+                      </td>
+
+                      <!-- Action button -->
+                      <td>
+                        <button class="btn btn-sm" [ngClass]="record.isLocked ? 'btn-outline-secondary' : 'btn-primary'"
+                          [disabled]="record.isLocked" (click)="markAttendance(record)">
+                          {{ record.isLocked ? 'Attendance Marked' : 'Mark Attendance' }}
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </mat-tab>
+
+          <!-- Fees Tab -->
+          <mat-tab label="Fees">
+            <div class="mt-3">
+              <table class="table table-bordered text-center">
+                <thead class="table-light">
+                  <tr>
+                    <th>Due No</th>
+                    <th>Due Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>make payment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let due of selectedStudentOverview?.dueDay">
+                    <td>{{ due.dueNo }}</td>
+                    <td>{{ due.dueDate|date:'dd MMM yy' }}</td>
+                    <td>{{ due.dueAmt |currency:'INR':'symbol' }}</td>
+                    <td>
+                      {{due.status}} </td>
+                    <td>
+                      @if (due.status == 'Not Paid') {
+                      <button *ngIf="due.status == 'Not Paid'" class="btn btn-sm btn-outline-success  ms-2"
+                        (click)="makePayment(due)">
+                        <i class="fa fa-credit-card" aria-hidden="true"></i>
+                        mark paid
+                      </button>
+                      }@else{
+                      <p class="badge bg-primary">cleared</p>
+                      }
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </mat-tab>
+
+          <!-- Projects Tab -->
+          <mat-tab label="Projects">
+            <div class="mt-3">
+              <p>📌 Projects info...</p>
+            </div>
+          </mat-tab>
+
+          <!-- Assignments Tab -->
+          <mat-tab label="Assignments">
+            <div class="mt-3">
+              <p>📝 Assignments info...</p>
+            </div>
+          </mat-tab>
+
+        </mat-tab-group>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeOverViewModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade show d-block" *ngIf="isMailModalOpen" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" style="width: 70vw;" role="document">
+    <div class="modal-content k-fs k-lead-form">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title">Send Mail</h5>
+        <button type="button" class="btn-close" (click)="closeMailModal()"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+
+        <form (ngSubmit)="sendMailToClient()">
+
+          <!-- Receiver -->
+          <div class="mb-3">
+            <label class="form-label">Receiver Email</label>
+            <input type="email" class="form-control" placeholder="Enter receiver email" [(ngModel)]="mailData.receiver"
+              name="receiver" required />
+          </div>
+
+          <!-- Message -->
+          <div class="mb-3">
+            <label class="form-label">Subject</label>
+            <input class="form-control" placeholder="Type your Subject..." [(ngModel)]="mailData.subject" name="message"
+              required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Message</label>
+            <textarea class="form-control" rows="5" placeholder="Type your message..." [(ngModel)]="mailData.message"
+              name="message" required></textarea>
+          </div>
+
+        </form>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeMailModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="sendMailToClient()">Send Mail</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-backdrop fade show" *ngIf="isMailModalOpen"></div>

@@ -1,0 +1,85 @@
+// reminder-popup.component.scss
+.reminder-popup-container {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.reminder-popup-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+    border-left: 5px solid #a72fd3;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    padding: 14px 16px;
+    min-width: 300px;
+    animation: slideIn 0.3s ease-out;
+    animation: slideIn 0.3s ease-out, pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 4px 24px rgba(159, 47, 211, 0.5);
+    }
+}
+
+.reminder-icon {
+    font-size: 24px;
+}
+
+.reminder-content {
+    flex: 1;
+}
+
+.reminder-title {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.reminder-desc {
+    font-size: 13px;
+    color: #555;
+}
+
+.reminder-time {
+    font-size: 12px;
+    color: #888;
+}
+
+.reminder-dismiss-btn {
+    background: #b52fd3;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+
+    &:hover {
+        background: #9d1cb7;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

@@ -1,0 +1,140 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold">User Access Management</h4>
+            <p class="text-muted small">Create and manage CRM logins, roles, account status and route permissions.</p>
+        </div>
+        <button class="btn k-btn" (click)="openModal('create')">
+            <i class="fas fa-plus me-2"></i> Create New User
+        </button>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Username</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Route Access</th>
+                        <th>Linked Staff</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let user of users">
+                        <td class="ps-4 font-monospace">{{ user.username }}</td>
+                        <td>
+                            <span class="badge" [ngClass]="{
+                                'bg-primary-subtle text-primary': user.role === 'SUPER_ADMIN',
+                                'bg-info-subtle text-info': user.role === 'ADMIN',
+                                'bg-secondary-subtle text-secondary': user.role === 'STAFF',
+                                'bg-warning-subtle text-warning': user.role === 'MANAGER'
+                            }">{{ user.role }}</span>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                [ngClass]="user.enabled === false ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'">
+                                {{ user.enabled === false ? 'Disabled' : 'Enabled' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                <span class="badge bg-light text-dark"
+                                    *ngFor="let route of user.displayRoutes.slice(0, 3)">{{ route }}</span>
+                                <span class="badge bg-light text-muted" *ngIf="user.displayRoutes.length > 3">+{{
+                                    user.displayRoutes.length - 3 }}</span>
+                            </div>
+                        </td>
+                        <td>{{ user.staffName || 'N/A' }}</td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-light me-1" (click)="openModal('edit', user)"><i
+                                    class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-light text-danger" (click)="deleteUser(user)"><i
+                                    class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    <tr *ngIf="users.length === 0">
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fas fa-info-circle me-2"></i> No users found. Use the "Create New User" button to
+                            add one.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade show d-block" *ngIf="isModalOpen" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0">
+                <h5 class="fw-bold m-0">{{ isEditMode ? 'Edit Access Account' : 'Create Access Account' }}</h5>
+                <button type="button" class="btn-close" (click)="closeModal()"></button>
+            </div>
+            <div class="modal-body py-4">
+                <form [formGroup]="userForm" class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold small">Username</label>
+                        <input type="text" class="form-control" placeholder="Enter username" formControlName="username">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold small">Password</label>
+                        <input type="password" class="form-control"
+                            placeholder="{{ isEditMode ? 'Leave blank to keep current password' : 'Set password' }}"
+                            formControlName="password">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small">Role Type</label>
+                        <select class="form-select" formControlName="role">
+                            <option value="" disabled>Select Role</option>
+                            <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small">Link to Staff Profile</label>
+                        <select class="form-select" formControlName="staffId">
+                            <option value="">None</option>
+                            <option *ngFor="let staff of staffList" [value]="staff.id">{{ staff.name }}</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" formControlName="enabled"
+                                id="enabledSwitch">
+                            <label class="form-check-label fw-semibold" for="enabledSwitch">Enable this account</label>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold small">Route Permissions</label>
+                        <div class="border rounded-3 p-3 bg-light">
+                            <div class="row g-2">
+                                <div class="col-md-6" *ngFor="let route of availableRoutes">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                            [checked]="isRouteSelected(route.key)"
+                                            (change)="toggleRoute(route.key, $any($event.target).checked)">
+                                        <label class="form-check-label">{{ route.label }}</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button class="btn btn-light px-4" (click)="closeModal()">Cancel</button>
+                <button class="btn k-btn px-4" (click)="saveUser()">{{ isEditMode ? 'Update Account' : 'Create Account'
+                    }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="isModalOpen"></div>

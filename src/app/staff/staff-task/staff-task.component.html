@@ -1,0 +1,324 @@
+<div class=" py-4  Active-Task-Container px-2" style="width: 100% !important;">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1">Project Workspace</h3>
+      <p class="text-muted k-fs2">Manage and track team productivity with agile Kanban workflow</p>
+    </div>
+
+    <button *ngIf="auth.isAdmin()" class="btn k-btn shadow-sm rounded-pill px-4" (click)="openTaskModal()">
+      <mat-icon class="me-1">add_task</mat-icon> New Task
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div *ngIf="auth.isAdmin()" class="row g-3 mb-4">
+    <div *ngFor="let stat of taskStats; let i = index" class="col">
+      <div class="card shadow-sm border-0 rounded-4 p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted k-fs-s fw-bold text-uppercase letter-spacing-1">{{ getStatName(stat) }}</span>
+          <mat-icon [class]="'text-soft-' + i" class="opacity-50 k-fs">{{
+            getStatName(stat) === 'TotalTasks' ? 'inventory_2' :
+            getStatName(stat) === 'ToDo' ? 'schedule' :
+            getStatName(stat) === 'InProgress' ? 'sync' :
+            getStatName(stat) === 'Completed' ? 'check_circle' : 'error'
+            }}</mat-icon>
+        </div>
+        <h3 class="fw-bold mb-0" [class.text-danger]="getStatName(stat) === 'Overdue'">{{ getStatValue(stat) }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="search-pill-container d-flex align-items-center mb-4 gap-2">
+    <mat-icon class="text-muted ms-2">search</mat-icon>
+    <input type="text" class="form-control search-input" placeholder="Search tasks, leads, or descriptions..."
+      [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()">
+
+    <select class="form-select filter-select w-auto" [(ngModel)]="selectedType" (ngModelChange)="applyFilters()">
+      <option value="">All Types</option>
+      <option *ngFor="let type of taskTypes" [value]="type">{{ type }}</option>
+    </select>
+
+    <select *ngIf="auth.isAdmin()" class="form-select filter-select w-auto" [(ngModel)]="selectedStaff"
+      (ngModelChange)="applyFilters()">
+      <option value="">All Members</option>
+      <option *ngFor="let staff of staffList" [value]="staff.id">{{ staff.name }}</option>
+    </select>
+  </div>
+
+  <!-- Kanban Workspace wrapper -->
+  <div class="kanban-scroller  ">
+    <div cdkDropListGroup class="kanban-board">
+
+      <!-- Pending Column -->
+      <div class="kanban-column" id="todo" cdkDropList [cdkDropListData]="todo" (cdkDropListDropped)="drop($event)">
+        <div class="column-header">
+          <h5><i class="fas fa-circle text-secondary"></i> To Do</h5>
+          <span class="badge">{{todo.length}}</span>
+        </div>
+
+        <div *ngFor="let task of todo" class="task-card" [ngClass]="'priority-' + task?.priority?.toLowerCase()" cdkDrag
+          (click)="viewTask(task)">
+          <div class="task-actions" *ngIf="auth.isAdmin()">
+            <button class="btn btn-edit" (click)="editTask(task, $event)" title="Edit Task">
+              <mat-icon ripple>edit</mat-icon>
+            </button>
+            <button class="btn btn-delete" (click)="deleteTask(task.id, $event)" title="Delete Task">
+              <mat-icon ripple>delete_outline</mat-icon>
+            </button>
+          </div>
+          <div class="task-title">{{ task?.taskTitle }}</div>
+          <div class="task-desc">{{ task?.description }}</div>
+
+          <div class="task-meta">
+            <div class="meta-item"><i class="fas fa-tag"></i> {{ task?.taskType }}</div>
+            <div class="meta-item"><i class="far fa-user"></i> {{ task?.associatedLead || 'No Lead' }}</div>
+          </div>
+
+          <div class="task-footer">
+            <div class="d-flex align-items-center gap-2">
+              <div class="staff-avatar">{{ task?.staffName?.charAt(0)?.toUpperCase() }}</div>
+              <small class="text-muted k-fs-s">{{ task?.staffName }}</small>
+            </div>
+            <div *ngIf="isOverdue(task?.dueDate)" class="overdue-indicator">
+              <div class="dot"></div>
+              Overdue
+            </div>
+            <small *ngIf="!isOverdue(task?.dueDate)" class="text-muted k-fs-s">
+              <i class="far fa-calendar-alt"></i> {{ task?.dueDate }}
+            </small>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="todo.length === 0" class="empty-state">
+          <div class="empty-icon-wrapper">
+            <mat-icon>inbox</mat-icon>
+          </div>
+          <h6>No tasks pending</h6>
+          <p class="text-muted k-fs-s">Backlog is clear</p>
+        </div>
+      </div>
+
+      <!-- In Progress Column -->
+      <div class="kanban-column" id="inProgress" cdkDropList [cdkDropListData]="inProgress"
+        (cdkDropListDropped)="drop($event)">
+        <div class="column-header">
+          <h5><i class="fas fa-circle text-primary"></i> Active</h5>
+          <span class="badge">{{inProgress.length}}</span>
+        </div>
+
+        <div *ngFor="let task of inProgress" class="task-card" [ngClass]="'priority-' + task?.priority?.toLowerCase()"
+          cdkDrag (click)="viewTask(task)">
+          <div class="task-actions" *ngIf="auth.isAdmin()">
+            <button class="btn btn-edit" (click)="editTask(task, $event)" title="Edit">
+              <mat-icon ripple>edit</mat-icon>
+            </button>
+            <button class="btn btn-delete" (click)="deleteTask(task.id, $event)" title="Delete">
+              <mat-icon ripple>delete_outline</mat-icon>
+            </button>
+          </div>
+          <div class="task-title">{{ task?.taskTitle }}</div>
+          <div class="task-desc">{{ task?.description }}</div>
+
+          <div class="task-meta">
+            <div class="meta-item"><i class="fas fa-tag"></i> {{ task?.taskType }}</div>
+            <div class="meta-item"><i class="far fa-user"></i> {{ task?.associatedLead || 'No Lead' }}</div>
+          </div>
+
+          <div class="task-footer">
+            <div class="d-flex align-items-center gap-2">
+              <div class="staff-avatar" style="background: #3b82f6;">{{ task?.staffName?.charAt(0)?.toUpperCase() }}
+              </div>
+              <small class="text-muted k-fs-s">{{ task?.staffName }}</small>
+            </div>
+            <div *ngIf="isOverdue(task?.dueDate)" class="overdue-indicator">
+              <div class="dot"></div>
+              Overdue
+            </div>
+            <small *ngIf="!isOverdue(task?.dueDate)" class="text-muted k-fs-s">
+              <i class="far fa-calendar-alt"></i> {{ task?.dueDate }}
+            </small>
+          </div>
+        </div>
+        <div *ngIf="inProgress.length === 0" class="empty-state">
+          <div class="empty-icon-wrapper">
+            <mat-icon>bolt</mat-icon>
+          </div>
+          <h6>Nothing active</h6>
+          <p class="text-muted k-fs-s">Start something new</p>
+        </div>
+      </div>
+
+      <!-- Completed Column -->
+      <div class="kanban-column" id="completed" cdkDropList [cdkDropListData]="completed"
+        (cdkDropListDropped)="drop($event)">
+        <div class="column-header">
+          <h5><i class="fas fa-circle text-success"></i> Done</h5>
+          <span class="badge">{{completed.length}}</span>
+        </div>
+
+        <div *ngFor="let task of completed" class="task-card" [ngClass]="'priority-' + task?.priority?.toLowerCase()"
+          cdkDrag (click)="viewTask(task)">
+          <div class="task-actions" *ngIf="auth.isAdmin()">
+            <button class="btn btn-delete" (click)="deleteTask(task.id, $event)" title="Delete">
+              <mat-icon ripple>delete_outline</mat-icon>
+            </button>
+          </div>
+          <div class="task-title text-decoration-line-through opacity-75">{{ task?.taskTitle }}</div>
+          <div class="task-desc opacity-75">{{ task?.description }}</div>
+
+          <div class="task-meta">
+            <div class="meta-item text-success"><i class="fas fa-check"></i> {{ task?.status }}</div>
+          </div>
+
+          <div class="task-footer">
+            <div class="d-flex align-items-center gap-2">
+              <div class="staff-avatar" style="background: #10b981;">{{ task?.staffName?.charAt(0)?.toUpperCase() }}
+              </div>
+              <small class="text-muted k-fs-s">{{ task?.staffName }}</small>
+            </div>
+            <small class="text-muted k-fs-s">
+              <i class="far fa-calendar-check"></i> {{ task?.dueDate }}
+            </small>
+          </div>
+        </div>
+        <div *ngIf="completed.length === 0" class="empty-state">
+          <div class="empty-icon-wrapper">
+            <mat-icon>assignment_turned_in</mat-icon>
+          </div>
+          <h6>No completions</h6>
+          <p class="text-muted k-fs-s">Pending final review</p>
+        </div>
+      </div>
+
+      <!-- Submitted Column -->
+      <div class="kanban-column" id="submitted" cdkDropList [cdkDropListData]="submitted"
+        (cdkDropListDropped)="drop($event)">
+        <div class="column-header">
+          <h5><i class="fas fa-circle text-warning"></i> Archive</h5>
+          <span class="badge">{{submitted.length}}</span>
+        </div>
+
+        <div *ngFor="let task of submitted" class="task-card" [ngClass]="'priority-' + task?.priority?.toLowerCase()"
+          cdkDrag (click)="viewTask(task)" [cdkDragDisabled]="task.status === 'Submitted'">
+          <div class="task-actions" *ngIf="auth.isAdmin()">
+            <button class="btn btn-delete" (click)="deleteTask(task.id, $event)" title="Delete">
+              <mat-icon ripple>delete_outline</mat-icon>
+            </button>
+          </div>
+          <div class="task-title opacity-75">{{ task?.taskTitle }}</div>
+          <div class="task-desc opacity-75">{{ task?.description }}</div>
+
+          <div class="task-meta">
+            <div class="meta-item"><i class="fas fa-archive"></i> {{ task?.status }}</div>
+          </div>
+
+          <div class="task-footer">
+            <div class="d-flex align-items-center gap-2">
+              <div class="staff-avatar" style="background: #f59e0b;">{{ task?.staffName?.charAt(0)?.toUpperCase() }}
+              </div>
+              <small class="text-muted k-fs-s">{{ task?.staffName }}</small>
+            </div>
+            <small class="text-muted k-fs-s">Verified</small>
+          </div>
+        </div>
+        <div *ngIf="submitted.length === 0" class="empty-state">
+          <div class="empty-icon-wrapper">
+            <mat-icon>inventory</mat-icon>
+          </div>
+          <h6>Empty archive</h6>
+          <p class="text-muted k-fs-s">Clean records</p>
+        </div>
+      </div>
+
+    </div> <!-- Close Board -->
+  </div> <!-- Close Scroller -->
+</div> <!-- Close container-fluid -->
+
+<!-- Modal -->
+<div class="modal fade show d-block premium-modal" *ngIf="isTaskModalOpen" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-light bg-opacity-50">
+        <div>
+          <h5 class="modal-title fw-bold text-dark">
+            {{ taskForm.disabled ? 'Task Details' : (isEditMode ? 'Edit Task' : 'Create New Task') }}
+          </h5>
+          <p class="text-muted k-fs-s mb-0">Fill in the details to assign a new project task</p>
+        </div>
+        <button type="button" class="btn-close" (click)="closeTaskModal()"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <form [formGroup]="taskForm">
+          <div class="row g-4">
+            <div class="col-12">
+              <label class="form-label fw-semibold k-fs2">Task Title</label>
+              <input type="text" class="form-control rounded-3" placeholder="e.g., Follow up with potential Lead"
+                formControlName="taskTitle">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold k-fs2">Task Description</label>
+              <textarea class="form-control rounded-3" rows="3"
+                placeholder="Provide detailed instructions for the staff member..."
+                formControlName="description"></textarea>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold k-fs2">Category / Type</label>
+              <select class="form-select rounded-3" formControlName="taskType">
+                <option value="" selected>Select category</option>
+                <option *ngFor="let type of taskTypes" [value]="type">{{ type }}</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold k-fs2">Set Priority</label>
+              <select class="form-select rounded-3" formControlName="priority">
+                <option value="">Select</option>
+                <option value="Low">Low - Minor Task</option>
+                <option value="Medium">Medium - Standard</option>
+                <option value="High">High - Urgent</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold k-fs2">Assignee</label>
+              <select class="form-select rounded-3" formControlName="staffId">
+                <option value="">Select team member</option>
+                <option *ngFor="let staff of staffList" [value]="staff.id">{{ staff.name }}</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold k-fs2">Deadline / Due Date</label>
+              <input type="date" class="form-control rounded-3" formControlName="dueDate">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold k-fs2">Related Lead (Optional)</label>
+              <input type="text" class="form-control rounded-3" placeholder="Search and select lead..."
+                formControlName="associatedLead">
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer bg-light bg-opacity-50">
+        <button class="btn btn-link text-decoration-none text-muted fw-semibold" (click)="closeTaskModal()">Discard
+          Changes</button>
+        <button *ngIf="!taskForm.disabled" class="btn k-btn px-4 rounded-pill shadow-sm" (click)="createTask()">
+          <mat-icon class="me-1">{{ isEditMode ? 'save' : 'send' }}</mat-icon> {{ isEditMode ? 'Update Task' : 'Assign
+          Task' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop -->
+<div class="modal-backdrop fade show" style="backdrop-filter: blur(4px); background: rgba(0,0,0,0.3);"
+  *ngIf="isTaskModalOpen"></div>

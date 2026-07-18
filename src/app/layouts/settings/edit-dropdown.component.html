@@ -1,0 +1,20 @@
+<h2 mat-dialog-title>Edit {{ data.dropdownType }}</h2>
+<mat-dialog-content>
+  <form [formGroup]="form">
+    <div formArrayName="items">
+      <div *ngFor="let item of items.controls; let i = index" class="mb-2 d-flex align-items-center gap-2">
+        <input [formControlName]="i" class="form-control" placeholder="Enter item" />
+        <button type="button" class="btn btn-danger btn-sm" (click)="removeItem(i)" [disabled]="items.length === 1">
+          &times;
+        </button>
+      </div>
+    </div>
+    <div class="my-3">
+      <button type="button" class="btn btn-primary btn-sm" (click)="addItem()">Add Another</button>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+  <button class="btn btn-success" (click)="onSave()" [disabled]="!form.valid">Save</button>
+</mat-dialog-actions>

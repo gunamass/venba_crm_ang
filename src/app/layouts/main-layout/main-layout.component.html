@@ -1,0 +1,84 @@
+<div class="layout vh-100 ">
+  <!-- Sidebar -->
+  <aside class="sidebar vh-100 overflow-scroll ">
+    <div class="sidebar-header">
+      <img src="icon/logo.png" alt="Logo" class="logo" />
+      <h2>Venba Coaching</h2>
+      <span class="subtitle">CRM System</span>
+    </div>
+
+    <!-- User Info -->
+    <div class="user-info">
+      <mat-icon>account_circle</mat-icon>
+      <div>
+        <h5>{{ username || 'User' }}</h5>
+        <small class="text-capitalize">{{ roleTitle || 'Member' }}</small>
+      </div>
+    </div>
+
+    <!-- Menu -->
+    <ul class="nav flex-column mt-3">
+      <li *ngFor="let item of filteredMenuItems" class="nav-item">
+        <a *ngIf="!item.isLogout" [routerLink]="item.route" routerLinkActive="kbg text-white rounded-4 shadow-lg"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="nav-link d-flex align-items-center justify-content-between">
+          <span>
+            <mat-icon class="me-2">{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </span>
+          <span *ngIf="item.badge" class="badge bg-secondary ms-auto">{{ item.badge }}</span>
+        </a>
+        <a *ngIf="item.isLogout" (click)="logout()"
+          class="nav-link d-flex align-items-center justify-content-between cursor-pointer">
+          <span>
+            <mat-icon class="me-2">{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </span>
+          <span *ngIf="item.badge" class="badge bg-secondary ms-auto">{{ item.badge }}</span>
+        </a>
+
+      </li>
+    </ul>
+
+  </aside>
+
+  <!-- Main content -->
+  <div class="main ">
+    <!-- Header  [routerLink]="'/admin/notifications'" -->
+    <header class="header d-flex align-items-center justify-content-between position-sticky ">
+      <div class="left">
+        <span class="badge bg-success me-3">System Online</span>
+        <span>Today: {{ today | date }}</span>
+      </div>
+      <div class="right d-flex align-items-center gap-3">
+        <mat-icon [matBadge]="notiCount || 0" (click)="openNotifications()" aria-hidden="false">notifications</mat-icon>
+        <mat-icon *ngIf="auth.isAdmin()" aria-hidden="false" [routerLink]="'/admin/settings'">settings</mat-icon>
+        <mat-icon>account_circle</mat-icon>
+        <span class="text-capitalize">{{ username }}</span>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <main class="p-4 overflow-scroll ">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
+
+
+<div class="notification-drawer position-fixed top-0 end-0 h-100 bg-white shadow-lg" *ngIf="notificationsOpen"
+  style="width: 320px; z-index: 1051; transition: right 0.3s;">
+  <div class="d-flex justify-content-between align-items-center px-3 py-3 border-bottom">
+    <span class="fw-bold">Notifications</span>
+    <button type="button" class="btn-close" aria-label="Close" (click)="closeNotifications()"></button>
+  </div>
+  <div class="p-3">
+    <app-notifications></app-notifications>
+  </div>
+</div>
+
+<div *ngIf="notificationsOpen" class="position-fixed top-0 start-0  w-100 h-100 bg-dark bg-opacity-50"
+  style="z-index: 1050;" (click)="closeNotifications()">
+</div>
+
+<app-reminder-popup></app-reminder-popup>

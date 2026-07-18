@@ -1,0 +1,25 @@
+.chart-placeholder {
+  height: 250px;
+  background: #f8f9fa;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bg-purple {
+  background-color: #6f42c1;
+}
+
+.extra-small {
+  font-size: 0.7rem;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(51, 133, 255, 0.05);
+}
+
+.sticky-top {
+  z-index: 10;
+}

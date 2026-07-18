@@ -1,0 +1,17 @@
+<!-- reminder-popup.component.html -->
+<div class="reminder-popup-container">
+    <div class="reminder-popup-card" *ngFor="let reminder of reminderService.activeReminders$ | async">
+        <div class="reminder-icon">📞</div>
+
+        <div class="reminder-content">
+            <div class="reminder-title">Reminder for {{ reminder.leadName }}</div>
+            <div class="reminder-desc">{{ reminder.description }}</div>
+            <div class="reminder-time">Time: {{ '2020-01-01T'+reminder.time | date:'hh:mm a'
+                }} </div>
+        </div>
+
+        <button class="reminder-dismiss-btn" (click)="onDismiss(reminder.id)">
+            Dismiss
+        </button>
+    </div>
+</div>

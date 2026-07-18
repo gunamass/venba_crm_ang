@@ -1,0 +1,187 @@
+<div class="dashboard-container" *ngIf="isBrowser">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold text-dark">Enterprise Dashboard</h3>
+      <p class="text-muted mb-0 k-fs2">Real-time performance metrics and Coaching growth analytics</p>
+    </div>
+    <div class="actions">
+      <button class="btn btn-white shadow-sm border-0 rounded-pill px-4 me-2">
+        <mat-icon class="me-1 vertical-align-middle">download</mat-icon> Export Report
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div *ngIf="auth.isAdmin()" class="row g-4 mb-4">
+    <div class="col-12 col-sm-6 col-md-3" *ngFor="let stat of stats; let i = index">
+      <div class="card shadow-sm border-0 stat-card">
+        <div class="card-body">
+          <div class="icon-container" [ngClass]="{
+            'bg-soft-blue': i === 0,
+            'bg-soft-green': i === 1,
+            'bg-soft-orange': i === 2,
+            'bg-soft-red': i === 3
+          }">
+            <mat-icon>{{ stat.icon }}</mat-icon>
+          </div>
+          <div>
+            <h6 class="text-muted k-fs2 fw-semibold mb-1">{{ stat.title }}</h6>
+            <h3 class="fw-bold mb-0">{{ stat.value }}</h3>
+            <div class="mt-2">
+              <span class="badge"
+                [ngClass]="i % 2 === 0 ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'">
+                <i class="fas" [ngClass]="i % 2 === 0 ? 'fa-arrow-up' : 'fa-arrow-right'"></i>
+                {{ i === 0 ? '+12%' : i === 1 ? '+5%' : 'Steady' }}
+              </span>
+              <small class="text-muted ms-1 k-fs-s">{{ stat.subText }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <mat-tab-group *ngIf="auth.isAdmin()" class="mb-4">
+    <mat-tab label="Analytics Overview">
+      <div class="premium-tab-content py-4">
+        <!-- Charts Section -->
+        <div class="row g-4">
+          <div class="col-lg-4 col-md-6">
+            <div class="card chart-card">
+              <div class="card-header d-flex justify-content-between">
+                <h6>Lead Conversion Funnel</h6>
+                <mat-icon class="text-muted k-fs">more_vert</mat-icon>
+              </div>
+              <div class="card-body">
+                <canvas baseChart [data]="leadStageData" [options]="chartOptions" chartType="pie"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6">
+            <div class="card chart-card">
+              <div class="card-header d-flex justify-content-between">
+                <h6>Popular Courses</h6>
+                <mat-icon class="text-muted k-fs">more_vert</mat-icon>
+              </div>
+              <div class="card-body">
+                <canvas baseChart [data]="studentCourseData" [options]="chartOptions" chartType="doughnut"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-12">
+            <div class="card chart-card">
+              <div class="card-header d-flex justify-content-between">
+                <h6>Revenue Summary</h6>
+                <mat-icon class="text-muted k-fs">more_vert</mat-icon>
+              </div>
+              <div class="card-body">
+                <canvas baseChart [data]="feeBarData" [options]="chartOptions" chartType="bar"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Operations Summary">
+      <div class="premium-tab-content py-4">
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-body p-4">
+            <h6 class="fw-bold mb-3">Key Performance Indicators</h6>
+            <div class="table-responsive">
+              <table class="table table-borderless align-middle">
+                <thead class="text-muted k-fs2">
+                  <tr>
+                    <th>Operation</th>
+                    <th>Volume</th>
+                    <th>Trend</th>
+                    <th>Target</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody class="k-fs2">
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center"><mat-icon class="me-2 text-primary">campaign</mat-icon>
+                        Marketing Campaigns</div>
+                    </td>
+                    <td class="fw-bold">24 Active</td>
+                    <td><span class="text-success"><i class="fas fa-caret-up"></i> 14%</span></td>
+                    <td>
+                      <div class="progress" style="height: 6px; width: 80px;">
+                        <div class="progress-bar bg-primary" style="width: 70%;"></div>
+                      </div>
+                    </td>
+                    <td><button class="btn btn-sm btn-light">Manage</button></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center"><mat-icon
+                          class="me-2 text-success">assignment_turned_in</mat-icon> Task Completions</div>
+                    </td>
+                    <td class="fw-bold">128 This Week</td>
+                    <td><span class="text-success"><i class="fas fa-caret-up"></i> 8%</span></td>
+                    <td>
+                      <div class="progress" style="height: 6px; width: 80px;">
+                        <div class="progress-bar bg-success" style="width: 85%;"></div>
+                      </div>
+                    </td>
+                    <td><button class="btn btn-sm btn-light">View All</button></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center"><mat-icon class="me-2 text-warning">star</mat-icon> Student
+                        Feedback</div>
+                    </td>
+                    <td class="fw-bold">4.8 Average</td>
+                    <td><span class="text-secondary"><i class="fas fa-minus"></i> 0%</span></td>
+                    <td>
+                      <div class="progress" style="height: 6px; width: 80px;">
+                        <div class="progress-bar bg-warning" style="width: 96%;"></div>
+                      </div>
+                    </td>
+                    <td><button class="btn btn-sm btn-light">Details</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <div *ngIf="auth.isStaff()" class="welcome-section py-5">
+    <div class="card welcome-card p-5 rounded-4 shadow-lg text-center mx-auto" style="max-width: 700px;">
+      <div class="icon-circle bg-white bg-opacity-25 p-4 rounded-circle mx-auto mb-4" style="width: fit-content;">
+        <mat-icon style="font-size: 48px; height: 48px; width: 48px; color: white;">rocket_launch</mat-icon>
+      </div>
+      <h1 class="fw-bold mb-2">Welcome, {{ auth.getUsername() }}!</h1>
+      <p class="mb-4">You're logged in as a <strong>{{ auth.getRole() }}</strong>. Great to see you back!</p>
+
+      <div class="row g-3 justify-content-center">
+        <div class="col-sm-6 col-md-4">
+          <div class="p-3 bg-white bg-opacity-10 rounded-3 border border-white border-opacity-10 h-100">
+            <h4 class="fw-bold m-0">12</h4>
+            <small class="opacity-75">Assigned Tasks</small>
+          </div>
+        </div>
+        <div class="col-sm-6 col-md-4">
+          <div class="p-3 bg-white bg-opacity-10 rounded-3 border border-white border-opacity-10 h-100">
+            <h4 class="fw-bold m-0">5</h4>
+            <small class="opacity-75">Pending Reviews</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <button class="btn k-btn shadow-sm px-5 py-3 rounded-pill" [routerLink]="'/admin/staff-task'">
+          <mat-icon class="me-2">dashboard_customize</mat-icon> Go to My Workspace
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

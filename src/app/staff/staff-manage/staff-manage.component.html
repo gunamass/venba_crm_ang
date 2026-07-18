@@ -1,0 +1,367 @@
+<div class="container-fluid py-3 kf-s">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="fw-bold">Staff Management</h4>
+
+      <p class="text-muted k-fs2">Manage staff profiles, roles, and performance tracking</p>
+
+    </div>
+
+    <div class="d-flex gap-2">
+      <button class="btn k-btn" (click)="exportToCSV()">
+        <i class="fas fa-file-excel me-2"></i> Export Excel
+      </button>
+      <button *ngIf="auth.isAdmin()" class="btn k-btn text-white" (click)="openStaffModal('add')">
+        <i class="fas fa-plus me-2"></i> Add Staff Member
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div *ngIf="auth.isAdmin()" class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h6>Total Staff</h6>
+          <h3 class="fw-bold">{{ staffStats.total }}</h3>
+          <small class="text-muted">{{ staffStats.total }} active members</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h6>Active Tasks</h6>
+          <h3 class="fw-bold">{{ staffStats.activeTasks }}</h3>
+          <small class="text-muted">Across all staff</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h6>Conversions</h6>
+          <h3 class="fw-bold">{{ staffStats.conversions }}</h3>
+          <small class="text-muted">This month</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h6>Avg Performance</h6>
+          <h3 class="fw-bold">{{ staffStats.performance }}%</h3>
+          <small class="text-muted">Task completion rate</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+  <mat-tab-group>
+    <!-- Staff Overview Tab -->
+    <mat-tab label="Staff Overview">
+      <div class="mt-3">
+        <!-- Filters -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <input type="text" class="form-control w-50" (ngModelChange)="applyCombinedFilter()"
+            placeholder="Search staff members..." [(ngModel)]="searchQuery">
+        </div>
+
+        <!-- Staff Members Table -->
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h6 class="fw-bold">Staff Members ({{ staffDataSource.data.length }})</h6>
+            <p class="text-muted small">Manage your team members and their roles</p>
+
+            <div class="table-responsive k-fs2">
+              <table class="table align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Staff Member</th>
+                    <th>Role & Department</th>
+                    <th>Contact</th>
+                    <th>Tasks</th>
+                    <th>Leads/Conversions</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let staff of staffDataSource.filteredData">
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div
+                          class="avatar bg-secondary-subtle fs-3 rounded-circle me-2 d-flex justify-content-center align-items-center"
+                          style="width:40px; height:40px; font-weight:900;">
+                          {{ staff.name[0] | uppercase}}
+                        </div>
+                        <div>
+                          <div class="fw-bold">{{ staff.name }}</div>
+                          <small class="text-muted">Joined {{ staff.joiningDate | date:'dd MMM yy' }}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="fw-bold me-1">{{ staff.role }}</span><br>
+                      <small class="text-muted">{{ staff.department }}</small>
+                    </td>
+                    <td>
+                      <div><i class="fas fa-envelope me-1"></i> {{ staff.email }}</div>
+                      <div><i class="fas fa-phone me-1"></i> {{ staff.phoneNo }}</div>
+                    </td>
+                    <td>
+                      Active: {{ getActiveTaskCount(staff) }}<br>
+                      Completed: {{ getCompletedTaskCount(staff) }}
+                    </td>
+                    <td>
+                      Assigned: {{ staff.assignedLeads || 0 }}<br>
+                      Converted: {{ staff.conversions || 0 }}
+                    </td>
+                    <td>
+                      <span class="badge bg-success-subtle text-success">Active</span>
+                    </td>
+                    <td *ngIf="auth.isAdmin()">
+                      <button class="btn btn-sm me-1" title="View Profile" (click)="openStaffModal('view', staff)">
+                        <i class="fas fa-eye text-primary"></i>
+                      </button>
+                      <button class="btn btn-sm me-1" title="Edit Profile" (click)="openStaffModal('edit', staff)">
+                        <i class="fas fa-edit text-warning"></i>
+                      </button>
+                      <button class="btn btn-sm" title="Delete Staff" (click)="deleteStaff(staff.id)">
+                        <i class="fas fa-trash text-danger"></i>
+                      </button>
+                    </td>
+                    <td *ngIf="auth.isStaff() && staff.id === auth.getUserId()">
+                      <button class="btn btn-sm me-1" (click)="openStaffModal('view', staff)">
+                        <i class="fas fa-user-circle"></i> My Profile
+                      </button>
+                    </td>
+                    <td *ngIf="auth.isStaff() && staff.id !== auth.getUserId()">-</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Performance Tab -->
+    <mat-tab label="Performance" *ngIf="auth.isAdmin()">
+      <div class="mt-3">
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h6 class="fw-bold">Performance Overview</h6>
+            <p class="text-muted small">Track staff performance metrics and activity</p>
+
+            <!-- Example Performance UI -->
+            <div class="row g-3">
+              @for (counselor of staffDataSource.filteredData; track counselor.id) {
+              <div class="col-sm-6 col-md-4 col-lg-3">
+                <div class="card shadow-sm border-0 rounded-4 p-3 text-center h-100">
+                  <!-- Avatar Circle -->
+                  <div class="d-flex justify-content-center align-items-center mb-2">
+                    <div
+                      class="rounded-circle bg-secondary-subtle d-flex justify-content-center align-items-center text-uppercase fs-3"
+                      style="width: 50px; height: 50px; font-weight: 600;">
+                      {{ counselor.name[0] }}
+                    </div>
+                  </div>
+
+                  <!-- Name and Role -->
+                  <h6 class="mb-0 fw-bold">{{ counselor.name }}</h6>
+                  <p class="text-muted small mb-3">{{ counselor.role }}</p>
+
+                  <!-- Task Stats -->
+                  <div class="d-flex justify-content-around mb-3">
+                    <div>
+                      <h5 class="text-primary mb-0">{{ getActiveTaskCount(counselor) }}</h5>
+                      <small class="text-muted">Active Tasks</small>
+                    </div>
+                    <div>
+                      <h5 class="text-success mb-0">{{ getCompletedTaskCount(counselor) }}</h5>
+                      <small class="text-muted">Completed</small>
+                    </div>
+                  </div>
+
+                  <!-- Conversion Rate -->
+                  <div class="text-start small text-muted mb-1">
+                    Completion Rate
+                    <span class="float-end fw-semibold text-dark">{{ getPerformanceRate(counselor) }}%</span>
+                  </div>
+                  <div class="progress mb-3" style="height: 6px;">
+                    <div class="progress-bar bg-purple" role="progressbar"
+                      [style.width.%]="getPerformanceRate(counselor)">
+                    </div>
+                  </div>
+
+                  <!-- Button -->
+                  <button class="btn btn-purple w-100 fw-semibold" (click)="openStaffTable(counselor)">
+                    View Details
+                  </button>
+                </div>
+              </div>
+              }
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+</div>
+
+
+<!-- Staff Modal -->
+<div class="modal fade show d-block" *ngIf="isStaffModalOpen" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 600px" role="document">
+    <div class="modal-content rounded-3 shadow-lg">
+      <!-- Header -->
+      <div class="modal-header border-0 pb-0">
+        <div>
+          <h5 class="modal-title fw-bold">
+            {{ isViewOnly ? 'Staff Profile Details' : (isEditMode ? 'Update Staff Profile' : 'Add New Staff Member') }}
+          </h5>
+          <small class="text-muted">
+            {{ isViewOnly ? 'Viewing official records for staff member' : 'Enter staff member details to maintain the
+            system' }}
+          </small>
+        </div>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeStaffModal()"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <form [formGroup]="staffForm" class="row g-3 k-fs">
+          <div class="col-12">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-control" placeholder="Enter full name" formControlName="name" />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Role</label>
+            <select class="form-select" formControlName="role">
+              <option value="" disabled selected>Select role</option>
+              <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+              <option *ngIf="roles.length === 0" disabled>No roles found in settings</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" placeholder="Enter email" formControlName="email" />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Phone</label>
+            <input type="tel" class="form-control" placeholder="Enter phone number" maxlength="10"
+              formControlName="phone_no" />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Department</label>
+            <select class="form-select" formControlName="department">
+              <option value="" disabled>Select department</option>
+              <option *ngFor="let d of departments" [value]="d">{{ d }}</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Join Date</label>
+            <input type="date" class="form-control" formControlName="joining_date" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">ID Proof</label>
+            <select class="form-select" formControlName="id_proof">
+              <option value="">Select ID Proof</option>
+              <option value="Aadhaar Card">Aadhaar Card</option>
+              <option value="PAN Card">PAN Card</option>
+              <option value="Passport">Passport</option>
+              <option value="Voter ID">Voter ID</option>
+              <option value="Driving License">Driving License</option>
+              <option value="Ration Card">Ration Card</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Proof No</label>
+            <input type="text" class="form-control" formControlName="proof_no" />
+          </div>
+        </form>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-0" *ngIf="!isViewOnly">
+        <button type="button" class="btn k-btn px-4 text-white" (click)="addStaffMember()">
+          {{ isEditMode ? 'Update Staff Member' : 'Add Staff Member' }}
+        </button>
+      </div>
+      <div class="modal-footer border-0" *ngIf="isViewOnly">
+        <button type="button" class="btn btn-secondary px-4" (click)="closeStaffModal()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" tabindex="-1" [class.show]="staffTablePopup"
+  [style.display]="staffTablePopup ? 'block' : 'none'" role="dialog">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content rounded-3 shadow-lg">
+      <div class="modal-header">
+        <h5 class="modal-title fw-semibold">
+          <p class="fs-5 ">{{selectedStaff?.name}}</p>
+          <p class="text-muted k-fs2">{{selectedStaff?.role}}</p>
+        </h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeStaffTable()"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Example staff table -->
+        <table class="table table-bordered align-middle text-center">
+          <caption class="caption-top">
+
+          </caption>
+          <thead class="table-light">
+            <tr>
+              <th>Task Title</th>
+              <th>Priority</th>
+              <th>Task Type</th>
+              <th>Due Date </th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (staff of selectedStaff?.taskManagementDTOS; track staff?.id) {
+            <tr>
+              <td>{{ staff?.taskTitle }}</td>
+              <td> <span class="badge "
+                  [ngClass]="{'bg-danger':staff?.priority =='High','bg-warning':staff?.priority =='Medium','bg-primary':staff?.priority =='Low',}">{{
+                  staff?.priority }}</span> </td>
+              <td>{{ staff?.taskType }}</td>
+              <td>{{ staff?.dueDate | date : "dd-MM-YYYY"}}</td>
+              <td>{{ staff?.status }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeStaffTable()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Optional backdrop -->
+<div class="modal-backdrop fade" [class.show]="staffTablePopup" *ngIf="staffTablePopup"></div>

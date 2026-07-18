@@ -1,0 +1,65 @@
+<div class="vh-100 d-flex align-items-center justify-content-center bg-light">
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="bg-white p-5 rounded shadow"
+    style="width: 100%; max-width: 400px;">
+    <!-- Logo -->
+    <div class="text-center mb-4">
+      <img src="icon/logo.png" alt="Logo" class="img-fluid" style="max-width: 100px;">
+    </div>
+
+    <!-- Username -->
+    <div class="mb-3">
+      <input formControlName="username" type="text" class="form-control" placeholder="Username" />
+      <div *ngIf="loginForm.controls['username'].touched && loginForm.controls['username'].invalid"
+        class="text-danger small">
+        Username is required.
+      </div>
+    </div>
+
+    <!-- Password -->
+    <div class="mb-3">
+      <input formControlName="password" type="password" class="form-control" placeholder="Password" />
+      <div *ngIf="loginForm.controls['password'].touched && loginForm.controls['password'].invalid"
+        class="text-danger small">
+        Password is required.
+      </div>
+    </div>
+
+    <!-- Confirm Password -->
+    <div class="mb-3">
+      <input formControlName="confirmPassword" type="password" class="form-control" placeholder="Confirm Password" />
+      <div *ngIf="loginForm.errors?.['mismatch'] && loginForm.controls['confirmPassword'].touched"
+        class="text-danger small">
+        Passwords do not match.
+      </div>
+    </div>
+
+    <!-- Role -->
+    <div class="mb-3">
+      <select class="form-select text-black" [value]="loginForm.get('role')?.value" (change)="onRoleChange($event)">
+        <option value="" disabled>Select Role</option>
+        <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+        <option value="custom">Other (Enter)</option>
+      </select>
+      <input *ngIf="customRoleSelected" formControlName="role" type="text" class="form-control mt-2"
+        placeholder="Enter Role" />
+
+      <input *ngIf="customRoleSelected" formControlName="role" type="text" class="form-control mt-2"
+        placeholder="Enter Role" />
+      <div *ngIf="loginForm.controls['role'].touched && loginForm.controls['role'].invalid" class="text-danger small">
+        Role is required.
+      </div>
+    </div>
+
+    <!-- Admin Key -->
+    <div class="mb-3">
+      <input formControlName="adminKey" type="password" class="form-control" placeholder="Admin Key" />
+      <div *ngIf="loginForm.controls['adminKey'].touched && loginForm.controls['adminKey'].invalid"
+        class="text-danger small">
+        Admin Key is required.
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="btn k-btn w-100">Create Account</button>
+  </form>
+</div>

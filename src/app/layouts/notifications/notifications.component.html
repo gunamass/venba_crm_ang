@@ -1,0 +1,77 @@
+<div class="container py-3" style="max-width: 420px;">
+  <div *ngIf="loading" class="text-center my-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+
+  <div *ngIf="!loading">
+    <div class="d-flex flex-column gap-3">
+      <!-- TASK notifications -->
+      <div *ngFor="let t of notifications.task" [routerLink]="'/admin/staff-task'"
+        class="shadow-sm rounded-4 bg-white px-3 py-3 d-flex align-items-center" style="min-height: 64px;">
+        <i class="bi bi-clipboard me-3 text-primary fs-4"></i>
+        <div class="flex-grow-1">
+          <div class="fw-semibold">{{ t.taskTitle }}</div>
+          <small class="text-muted">{{ t.staffName }} • Due: {{ t.dueDate }}</small>
+        </div>
+        <span class="badge rounded-pill bg-warning text-dark ms-2">{{ t.priority }}</span>
+        <span class="badge rounded-pill bg-info text-dark ms-1">{{ t.status }}</span>
+      </div>
+
+      <!-- LEAD reminders -->
+      <div *ngFor="let lead of notifications.lead" [routerLink]="'/admin/lead'"
+        class="shadow-sm rounded-4 bg-white px-3 py-3 d-flex align-items-center">
+        <i class="bi bi-bell me-3 text-success fs-4"></i>
+        <div class="flex-grow-1">
+          <div class="fw-semibold">Reminder for {{ lead.fullName }}</div>
+          <small *ngFor="let log of lead.reminderLogs" class="d-block text-muted">
+            {{ log.description }} — <span class="badge rounded-pill bg-secondary">{{ log.type }}</span>
+            <span class="ms-1">{{ log.reminderDate }} {{ log.reminderTime }}</span>
+          </small>
+        </div>
+      </div>
+
+      <!-- ATTENDANCE notifications -->
+      <div *ngFor="let sa of notifications.studentAttendance" [routerLink]="'/admin/students'"
+        class="shadow-sm rounded-4 bg-white px-3 py-3 d-flex align-items-center">
+        <i class="bi bi-person-check-fill me-3 text-info fs-4"></i>
+        <div class="flex-grow-1">
+          <div class="fw-semibold">{{ sa.fullName }}'s Attendance</div>
+          <small *ngFor="let a of sa.attendance" class="d-block text-muted">
+            {{ a.date }} ({{ a.day }})
+            <span class="badge rounded-pill" [class.bg-success]="a.attend=='present'"
+              [class.bg-danger]="a.attend!='present'">
+              {{ a.attend }}
+            </span>
+          </small>
+        </div>
+      </div>
+
+      <!-- DUE DAY notifications -->
+      <div *ngFor="let sd of notifications.studentDueDays"
+        class="shadow-sm rounded-4 bg-white px-3 py-3 d-flex align-items-center">
+        <i class="bi bi-cash-stack me-3 text-danger fs-4"></i>
+        <div class="flex-grow-1">
+          <div class="fw-semibold">{{ sd.fullName }}'s Due:</div>
+          <small *ngFor="let dd of sd.dueDays" class="d-block text-muted">
+            #{{ dd.dueNo }}: ₹{{ dd.dueAmt }}
+            <span class="badge rounded-pill bg-light text-dark ms-1">{{ dd.dueDate }}</span>
+            <span class="badge rounded-pill ms-2" [class.bg-success]="dd.status==='Paid'"
+              [class.bg-danger]="dd.status!=='Paid'">
+              {{ dd.status }}
+            </span>
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="
+      !notifications.task?.length &&
+      !notifications.lead?.length &&
+      !notifications.studentAttendance?.length &&
+      !notifications.studentDueDays?.length
+      " class="mt-4 text-center text-muted">
+      <i class="bi bi-inbox fs-1"></i><br>
+      No notifications.
+    </div>
+  </div>
+</div>

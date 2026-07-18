@@ -1,0 +1,7 @@
+<div class="toast-container {{toast.y}} {{toast.x}}" *ngFor="let toast of toasts.slice().reverse()">
+    <div class="toast {{toast.type}} animate-{{toast.animation}}" (click)="remove(toast.id)">
+        <i [class]="'fa-solid ' + getIcon(toast.type)"></i>
+        <span>{{ toast.message }}</span>
+        <div class="toast-glow" [style.animation-duration.ms]="toast.time"></div>
+    </div>
+</div>

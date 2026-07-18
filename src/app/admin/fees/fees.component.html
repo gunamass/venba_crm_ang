@@ -1,0 +1,361 @@
+<div class="container-fluid py-4">
+
+  <!-- Page Title & Quick Actions -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="fw-bold mb-0">Fees Management</h4>
+      <p class="text-muted small mb-0">Monitor and manage student financial records</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-purple" (click)="exportToExcel()">
+        <i class="fas fa-file-excel me-1"></i> Export Excel
+      </button>
+      <button class="btn btn-purple" (click)="openRecordPayment()">
+        <i class="fas fa-plus me-1"></i> Record Payment
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md">
+      <div class="card shadow-sm border-0 border-start border-4 border-success h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <h6 class="text-muted small fw-bold text-uppercase">Total Collected</h6>
+            <i class="fas fa-wallet text-success"></i>
+          </div>
+          <h3 class="fw-bold mb-0">₹{{ totalCollected | number }}</h3>
+          <div class="mt-2 text-success small">
+            Overall collection Efficiency
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md">
+      <div class="card shadow-sm border-0 border-start border-4 border-danger h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <h6 class="text-muted small fw-bold text-uppercase">Total Pending</h6>
+            <i class="fas fa-exclamation-circle text-danger"></i>
+          </div>
+          <h3 class="fw-bold mb-0">₹{{ totalDue | number }}</h3>
+          <div class="mt-2 text-danger small">
+            <i class="fas fa-users me-1"></i> {{ overdueCount }} Students pending
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md">
+      <div class="card shadow-sm border-0 border-start border-4 border-primary h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <h6 class="text-muted small fw-bold text-uppercase">Monthly Target</h6>
+            <i class="fas fa-bullseye text-primary"></i>
+          </div>
+          <h3 class="fw-bold mb-0">₹{{ totalExpected | number }}</h3>
+          <div class="mt-2 text-primary small">
+            Total Expected Revenue
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-pills mb-4 bg-white p-2 rounded shadow-sm">
+    <li class="nav-item">
+      <button class="nav-link px-4" [class.active]="activeTab === 'overview'" (click)="switchTab('overview')">
+        <i class="fas fa-th-large me-2"></i>Overview
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link px-4" [class.active]="activeTab === 'student-fees'" (click)="switchTab('student-fees')">
+        <i class="fas fa-user-graduate me-2"></i>Student Fees
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link px-4" [class.active]="activeTab === 'analytics'" (click)="switchTab('analytics')">
+        <i class="fas fa-chart-pie me-2"></i>Analytics
+      </button>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content mt-4">
+
+    <!-- Overview Tab -->
+    <div *ngIf="activeTab === 'overview'">
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <div class="card shadow-sm border-0 p-3 h-100">
+            <h6 class="fw-bold mb-3">Collection Summary</h6>
+            <div style="height: 300px;">
+              <canvas baseChart [data]="doughnutChartData" [options]="doughnutChartOptions" [type]="doughnutChartType">
+              </canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="card shadow-sm border-0 p-3 h-100">
+            <h6 class="fw-bold mb-3">Revenue by Course</h6>
+            <div style="height: 300px;">
+              <canvas baseChart [data]="barChartData" [options]="barChartOptions" [type]="barChartType">
+              </canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Fees Tab -->
+    <div *ngIf="activeTab === 'student-fees'">
+      <!-- Filters -->
+      <div class="card shadow-sm border-0 mb-4 p-3 bg-white">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-4">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+              <input type="text" class="form-control border-start-0" placeholder="Search by name or ID..."
+                [(ngModel)]="searchText" (ngModelChange)="applyFilters()">
+            </div>
+          </div>
+          <div class="col-md-2">
+            <select class="form-select" [(ngModel)]="selectedClass" (ngModelChange)="applyFilters()">
+              <option value="">All Batches</option>
+              <option *ngFor="let cls of classes" [value]="cls">{{ cls }} Batch</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select class="form-select" [(ngModel)]="selectedCourse" (ngModelChange)="applyFilters()">
+              <option value="">All Courses</option>
+              <option *ngFor="let crs of courses" [value]="crs">{{ crs }}</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <select class="form-select" [(ngModel)]="selectedStatus" (ngModelChange)="applyFilters()">
+              <option value="">All Status</option>
+              <option value="Paid">Paid</option>
+              <option value="Pending">Pending</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fees Table -->
+      <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+              <tr>
+                <th class="ps-3">Student Details</th>
+                <th>Course & Batch</th>
+                <th>Total Fee</th>
+                <th>Balance</th>
+                <th>Status</th>
+                <th class="text-end pe-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of studentsDataSource.data">
+                <td class="ps-3">
+                  <div class="fw-bold">{{ s.fullName }}</div>
+                  <small class="text-muted">{{ s.studentID }}</small>
+                </td>
+                <td>
+                  <div class="small fw-semibold text-purple">{{ s.course }}</div>
+                  <div class="extra-small text-muted">{{ s.shift }} Batch</div>
+                </td>
+                <td class="fw-bold">₹{{ s.totalFee | number }}</td>
+                <td class="text-danger fw-bold">₹{{ s.balanceFee | number }}</td>
+                <td>
+                  <span class="badge rounded-pill" [ngClass]="{
+                    'bg-success-subtle text-success': (s.balanceFee || 0) == 0,
+                    'bg-danger-subtle text-danger': (s.balanceFee || 0) > 0
+                  }">
+                    {{ (s.balanceFee || 0) == 0 ? 'Fully Paid' : 'Pending' }}
+                  </span>
+                </td>
+                <td class="text-end pe-3">
+                  <button class="btn btn-sm btn-outline-purple me-2" (click)="generateInvoice(s)"
+                    [disabled]="isGeneratingInvoice" title="Generate Invoice">
+                    <i class="fas fa-file-invoice"></i>
+                  </button>
+                  <!-- <button *ngIf="(s.balanceFee || 0) > 0" class="btn btn-sm btn-success px-3 me-2"
+                    (click)="markPaid(s)">
+                    <i class="fas fa-check-circle me-1"></i> Mark Paid
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-receipt"></i>
+                  </button> -->
+                </td>
+              </tr>
+              <tr *ngIf="studentsDataSource.data.length === 0">
+                <td colspan="6" class="text-center py-5">
+                  <i class="fas fa-folder-open fa-3x text-muted mb-3 d-block"></i>
+                  <p class="text-muted">No fee records found matches your search.</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div *ngIf="activeTab === 'analytics'">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card shadow-sm border-0 p-4 h-100">
+            <h6 class="fw-bold mb-4">Collection Rate Analysis</h6>
+            <div class="d-flex align-items-center justify-content-center flex-column py-5">
+              <h1 class="display-3 fw-bold text-success mb-0">{{ collectionRate }}%</h1>
+              <p class="text-muted">Overall Efficiency</p>
+              <div class="progress w-100 mt-3" style="height: 10px;">
+                <div class="progress-bar bg-success" [style.width.%]="collectionRate"></div>
+              </div>
+            </div>
+            <hr>
+            <div class="mt-2">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Target Amount</span>
+                <span class="fw-bold">₹{{ totalExpected | number }}</span>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="text-muted">Actually Collected</span>
+                <span class="fw-bold">₹{{ totalCollected | number }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow-sm border-0 p-4 h-100">
+            <h6 class="fw-bold mb-4">Defaulter Breakdown</h6>
+            <div class="text-center py-5">
+              <h1 class="display-3 fw-bold text-danger mb-0">{{ overdueCount }}</h1>
+              <p class="text-muted">Students with outstanding fees</p>
+            </div>
+            <div class="alert alert-warning border-0 small">
+              <i class="fas fa-info-circle me-2"></i> Consider sending automated reminders to the outstanding students.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Hidden Invoice Template -->
+<div id="invoice-template" *ngIf="invoiceStudent"
+  style="position: absolute; left: -9999px; top: 0; padding: 50px; background: white; width: 800px; color: #333; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <div
+    style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #531909; padding-bottom: 25px; margin-bottom: 35px;">
+    <div>
+      <h1 style="color: #531909; font-weight: 900; margin: 0; font-size: 32px; letter-spacing: -1px;">INVOICE</h1>
+      <p style="margin: 5px 0; color: #666; font-size: 14px; font-weight: 500;">Learning Path to Success</p>
+    </div>
+    <div style="text-align: right;">
+      <h3 style="margin: 0; font-weight: 800; color: #333;">Venba Coaching</h3>
+      <p style="margin: 5px 0; font-size: 13px; color: #777; line-height: 1.4;">Address: 123, Vazhudavoor Road,
+        <br>Thilaspet, Gandhi Nagar,<br>Puducherry – 605009.
+      </p>
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; margin-bottom: 50px;">
+    <div style="width: 60%;">
+      <h6
+        style="text-transform: uppercase; color: #531909; margin-bottom: 12px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px;">
+        STUDENT DETAILS</h6>
+      <h4 style="margin: 0; font-weight: 700; color: #111; font-size: 20px;">{{ invoiceStudent.fullName }}</h4>
+      <div style="margin-top: 10px; font-size: 14px; color: #555;">
+        <p style="margin: 3px 0;"><strong>Student ID:</strong> {{ invoiceStudent.studentID }}</p>
+        <p style="margin: 3px 0;"><strong>Program:</strong> {{ invoiceStudent.course }}</p>
+        <p style="margin: 3px 0;"><strong>Schedule:</strong> {{ invoiceStudent.shift }} Batch</p>
+      </div>
+    </div>
+    <div
+      style="width: 35%; text-align: right; background: #f8f7ff; padding: 20px; border-radius: 12px; border: 1px solid #e9e6ff;">
+      <h6
+        style="text-transform: uppercase; color: #531909; margin-bottom: 10px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px;">
+        INVOICE INFO</h6>
+      <p style="margin: 4px 0; font-size: 14px; color: #444;"><strong>Date:</strong> {{ today | date:'dd MMM, yyyy' }}
+      </p>
+      <p style="margin: 4px 0; font-size: 14px; color: #444;"><strong>Invoice:</strong> #{{ invoiceStudent.studentID }}
+      </p>
+    </div>
+  </div>
+
+  <table style="width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 40px;">
+    <thead>
+      <tr style="background: #531909; color: white;">
+        <th
+          style="padding: 15px; text-align: left; border-radius: 8px 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">
+          Description</th>
+        <th
+          style="padding: 15px; text-align: right; border-radius: 0 8px 8px 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">
+          Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="padding: 20px 15px; border-bottom: 1px solid #edf0f2;">
+          <div style="font-weight: 600; font-size: 15px; color: #111;">Course Enrollment Fee</div>
+          <div style="font-size: 13px; color: #777; margin-top: 4px;">{{ invoiceStudent.course }} Full Program
+            Curriculum</div>
+        </td>
+        <td
+          style="padding: 20px 15px; text-align: right; border-bottom: 1px solid #edf0f2; font-weight: 600; font-size: 15px; color: #111;">
+          ₹{{ invoiceStudent.totalFee | number:'.2-2' }}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 20px 15px; border-bottom: 1px solid #edf0f2;">
+          <div style="font-weight: 600; font-size: 15px; color: #111;">Resources & Lab Access</div>
+          <div style="font-size: 13px; color: #777; margin-top: 4px;">Lifetime server access & study materials</div>
+        </td>
+        <td
+          style="padding: 20px 15px; text-align: right; border-bottom: 1px solid #edf0f2; font-weight: 600; font-size: 15px; color: #111;">
+          Gratis
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="display: flex; justify-content: flex-end;">
+    <div style="width: 300px; background: #fdfdfd; padding: 25px; border-radius: 15px; border: 1px solid #f0f0f0;">
+      <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
+        <span style="color: #777; font-size: 14px;">Total Course Fee</span>
+        <span style="font-weight: 600; color: #111;">₹{{ invoiceStudent.totalFee | number:'.2-2' }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
+        <span style="color: #28a745; font-size: 14px; font-weight: 600;">Total Paid Amount</span>
+        <span style="font-weight: 700; color: #28a745;">₹{{ (invoiceStudent.totalFee || 0) - (invoiceStudent.balanceFee
+          || 0) | number:'.2-2' }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 15px 0 0 0; margin-top: 10px;">
+        <span style="font-weight: 800; font-size: 19px; color: #333;">Balance Due</span>
+        <span style="font-weight: 800; font-size: 19px; color: #dc3545;">₹{{ invoiceStudent.balanceFee | number:'.2-2'
+          }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 100px; display: flex; justify-content: space-between; align-items: flex-end;">
+    <div style="width: 200px; text-align: center; font-size: 11px; color: #999;">
+      <div style="height: 60px;"></div>
+      <div style="border-top: 1px solid #ddd; padding-top: 5px;">Student Signature</div>
+    </div>
+    <div style="width: 200px; text-align: center; font-size: 11px; color: #999;">
+      <div
+        style="height: 40px; color: #531909; font-family: 'Brush Script MT', cursive; font-size: 24px; font-weight: bold;">
+        Venba Coaching Academy</div>
+      <div style="border-top: 1px solid #ddd; padding-top: 5px;">Authorized Signatory</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 40px; background: #531909; height: 5px; border-radius: 5px;"></div>
+  <p style="text-align: center; font-size: 10px; color: #bbb; margin-top: 15px; letter-spacing: 0.5px;">This is a
+    digitally generated invoice. No physical signature is required for validity.</p>
+</div>

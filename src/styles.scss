@@ -1,0 +1,171 @@
+/* You can add global styles to this file, and also import other style files */
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+:root {
+  --k-bg: #7B1E2B;
+  // --k-bg: rgb(51, 133, 255);
+  --k-bg-2: #7b1e2a71;
+  --k-fs: 12px;
+  --k-fs2: 13px;
+}
+
+.kbg {
+  background: var(--k-bg);
+}
+
+.k-btn {
+  background: var(--k-bg);
+  font-size: 12px;
+  color: white;
+}
+
+.k-fc {
+  color: var(--k-bg) !important;
+}
+
+.k-btn-2 {
+  background: var(--k-bg-2);
+  font-size: 12px;
+  color: rgb(0, 0, 0);
+}
+
+.k-btn:hover {
+  border: 1px solid var(--k-bg);
+  color: var(--k-bg) !important;
+}
+
+.k-fs {
+  font-size: var(--k-fs);
+}
+
+.k-fs2 {
+  font-size: var(--k-fs2);
+}
+
+.k-fs-s {
+  font-size: 9px;
+}
+
+input,
+select,
+button {
+  font-size: var(--k-fs) !important;
+}
+
+p {
+  margin-bottom: 0;
+}
+
+::ng-deep .sb-s {
+  background-color: #4caf50; // Green
+  color: white;
+}
+
+::ng-deep .sb-e {
+  background-color: #f44336; // Red
+  color: white;
+}
+
+::ng-deep.sb-w {
+  background-color: #ff9800; // Orange
+  color: black;
+}
+
+.cdk-overlay-container {
+  z-index: 2000 !important;
+}
+
+::ng-deep .mat-mdc-snack-bar-container {
+  z-index: 2005 !important;
+}
+
+
+/* For Angular Material 16+ MDC tabs */
+.mat-mdc-tab-group .mat-mdc-tab-list {
+  background: #f5f5fa;
+  border-radius: 35px;
+  padding: 2px;
+  margin: 18px 0 8px 0;
+  // margin: 0;
+  display: flex;
+}
+
+.mat-mdc-tab-group .mat-mdc-tab {
+  background: transparent;
+  border-radius: 20px;
+  color: #333;
+  font-weight: 500;
+  min-width: 170px;
+  margin: 0 4px;
+  transition: background 0.2s, color 0.2s;
+  height: 30px;
+  line-height: 42px;
+}
+
+.mat-mdc-tab-group .mat-mdc-tab.mdc-tab--active {
+  background: #fff;
+  color: #222;
+  box-shadow: 0 2px 8px 0 rgba(60, 60, 100, 0.05);
+}
+
+
+
+.mat-mdc-tab-group .mat-mdc-tab-indicator {
+  display: none !important;
+  opacity: 0 !important;
+  background: none !important;
+  border: none !important;
+  height: 0 !important;
+}
+
+.mat-mdc-tab-group .mat-mdc-tab-ripple {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+/* Chrome, Edge, Safari */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #bdbdbd;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9e9e9e;
+}
+
+::ng-deep .mat-mdc-tab .mdc-tab-indicator {
+  display: none !important;
+}
+
+.mat-mdc-tab .mdc-tab-indicator {
+  display: none !important;
+}
+
+.mdc-tab-indicator__content--underline {
+  display: none !important;
+}
+
+.mat-mdc-tab.mdc-tab--active {
+  background: #f3f4f6;
+  border-radius: 8px;
+}
